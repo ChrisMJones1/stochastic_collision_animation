@@ -10,7 +10,7 @@ function getRndHexColor() {
     // let r = getRndInteger(0, (256));
     // let g = getRndInteger(0, (256));
     // let b = getRndInteger(0, (256));
-    return "#" + (getRndInteger(0, (256))).toString(16) + (getRndInteger(0, (256))).toString(16) + (getRndInteger(0, (256))).toString(16);
+    return "#" + (getRndInteger(0, (256))).toString(16).padStart(2, '0') + (getRndInteger(0, (256))).toString(16).padStart(2, '0') + (getRndInteger(0, (256))).toString(16).padStart(2, '0');
 
 }
 
@@ -30,27 +30,31 @@ function collision_calc(ballOne, ballTwo, indexOne, indexTwo) {
 
     firstCircles[indexTwo].color = firstCircles[indexOne].color;
 
+    //random point mutation
+    if(Math.random() > 0.95)
+    {
+        firstCircles[indexTwo].color = getRndHexColor();
+    }
+
     //handling overlap
-    if(deltaX < radius * 2) {
-        if(ballOne.x  > ballTwo.x) {
+    // if(deltaX < radius * 2 && deltaY < radius * 2) {
+    //     if (ballOne.x > ballTwo.x) {
+    //
+    //         firstCircles[indexOne].x += (radius - (ballOne.x - radius - ballTwo.x)) / 2;
+    //         firstCircles[indexTwo].x -= (radius - (ballOne.x - radius - ballTwo.x)) / 2;
+    //     } else {
+    //         firstCircles[indexTwo].x += (radius - (ballTwo.x - radius - ballOne.x)) / 2;
+    //         firstCircles[indexOne].x -= (radius - (ballTwo.x - radius - ballOne.x)) / 2;
+    //     }
+    //
+    //
+    //     if (ballOne.y > ballTwo.y) {
+    //         firstCircles[indexOne].y += radius - (ballOne.y - radius - ballTwo.y);
+    //     } else {
+    //         firstCircles[indexTwo].y += radius - (ballTwo.y - radius - ballOne.y);
+    //     }
+    // }
 
-            firstCircles[indexOne].x +=  (radius - (ballOne.x - radius - ballTwo.x)) / 2;
-            firstCircles[indexTwo].x -=  (radius - (ballOne.x - radius - ballTwo.x)) / 2;
-        }
-        else {
-            firstCircles[indexTwo].x +=  (radius - (ballTwo.x - radius - ballOne.x)) / 2;
-            firstCircles[indexOne].x -=  (radius - (ballTwo.x - radius - ballOne.x)) / 2;
-        }
-    }
-
-    if(deltaY < radius * 2) {
-        if(ballOne.y  > ballTwo.y) {
-            firstCircles[indexOne].y +=  radius - (ballOne.y - radius - ballTwo.y);
-        }
-        else {
-            firstCircles[indexTwo].y +=  radius - (ballTwo.y - radius - ballOne.y);
-        }
-    }
 }
 
 const canvas = document.getElementById('canvas');
@@ -106,7 +110,7 @@ function firstDraw() {
 
     for(let x = gap + radius; x < pageWidth - gap - radius / 2; x = x + radius * 2 + gap) {
         for(let y = gap + radius; y < pageHeight - gap - radius / 2; y = y + radius * 2 + gap) {
-            let circ = new Circle(x, y, radius, getRndIntegerInc(-radius / 8, radius / 8), getRndIntegerInc(-radius / 8, radius / 8), `${x}${y}`);
+            let circ = new Circle(x, y, radius, getRndIntegerInc(-radius / 6, radius / 6), getRndIntegerInc(-radius / 6, radius / 6), `${x}${y}`);
             circles.push(circ);
         }
     }
@@ -134,11 +138,11 @@ function firstDraw() {
 
 let tick = 0;
 let nextframe;
-
+let collide_buffer = new Set();
 function update() {
-    
-    ctx.clearRect(0, 0, pageWidth, pageHeight);
 
+    ctx.clearRect(0, 0, pageWidth, pageHeight);
+    let collide_interbuffer = new Set();
     for (let c of firstCircles) {
 
         ctx.beginPath();
@@ -161,15 +165,18 @@ function update() {
             let ball1 = firstCircles[index1];
             for (let collide of collision) {
                 //collision_set.add(collide.id);
-                if(collide.id !== c.id) {
+                if(collide.id !== c.id && !collide_buffer.has(collide.id) && !collide_buffer.has(c.id)) {
                     let index2 = firstCircles.findIndex(i => i.id === collide.id);
 
                     let ball2 = firstCircles[index2];
 
                     collision_calc(ball1, ball2, index1, index2);
 
+                    collide_interbuffer.add(collide.id);
+                    collide_interbuffer.add(c.id);
 
                 }
+
             }
         }
 
@@ -200,7 +207,7 @@ function update() {
     // }
 
 
-
+    collide_buffer = collide_interbuffer;
 
     window.requestAnimationFrame(update);
 
