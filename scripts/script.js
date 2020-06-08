@@ -14,6 +14,45 @@ function getRndHexColor() {
 
 }
 
+//Modified and expanded version of collision function created by jsfiddle user Inkfood
+function collision_calc(ballOne, ballTwo, indexOne, indexTwo) {
+    let deltaX = ballOne.x - ballTwo.x;
+    let deltaY = ballOne.y - ballTwo.y;
+    let collisionAngle = Math.atan2(deltaY, deltaX);
+    let magOne = Math.sqrt(ballOne.forcex * ballOne.forcex + ballOne.forcey * ballOne.forcey);
+    let magTwo = Math.sqrt(ballTwo.forcex * ballTwo.forcex + ballTwo.forcey * ballTwo.forcey);
+    let dirOne = Math.atan2(ballOne.forcey, ballOne.forcex);
+    let dirTwo = Math.atan2(ballTwo.forcey, ballTwo.forcex);
+    firstCircles[indexOne].forcex = magOne * Math.cos(dirOne - collisionAngle);
+    firstCircles[indexOne].forcey = magOne * Math.sin(dirOne - collisionAngle);
+    firstCircles[indexTwo].forcex = magTwo * Math.cos(dirTwo - collisionAngle);
+    firstCircles[indexTwo].forcey = magTwo * Math.sin(dirTwo - collisionAngle);
+
+    firstCircles[indexTwo].color = firstCircles[indexOne].color;
+
+    //handling overlap
+    if(deltaX < radius * 2) {
+        if(ballOne.x  > ballTwo.x) {
+
+            firstCircles[indexOne].x +=  (radius - (ballOne.x - radius - ballTwo.x)) / 2;
+            firstCircles[indexTwo].x -=  (radius - (ballOne.x - radius - ballTwo.x)) / 2;
+        }
+        else {
+            firstCircles[indexTwo].x +=  (radius - (ballTwo.x - radius - ballOne.x)) / 2;
+            firstCircles[indexOne].x -=  (radius - (ballTwo.x - radius - ballOne.x)) / 2;
+        }
+    }
+
+    if(deltaY < radius * 2) {
+        if(ballOne.y  > ballTwo.y) {
+            firstCircles[indexOne].y +=  radius - (ballOne.y - radius - ballTwo.y);
+        }
+        else {
+            firstCircles[indexTwo].y +=  radius - (ballTwo.y - radius - ballOne.y);
+        }
+    }
+}
+
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
@@ -35,7 +74,7 @@ let randomy = getRndInteger(0, (pageHeight));
 
 
 
-let radius = 10;
+let radius = 25;
 
 let gap = 5;
 
@@ -97,8 +136,7 @@ let tick = 0;
 let nextframe;
 
 function update() {
-
-    const collision_set = new Set();
+    
     ctx.clearRect(0, 0, pageWidth, pageHeight);
 
     for (let c of firstCircles) {
@@ -115,22 +153,34 @@ function update() {
 
 
         //check for collision
-        const collision = [];
-        collision.push(firstCircles.filter(circ => (Math.sqrt((c.x - circ.x) * (c.x - circ.x) + (c.y - circ.y) * (c.y - circ.y))) < (c.radius + circ.radius)));
+
+        let collision = (firstCircles.filter(circ => (Math.sqrt((c.x - circ.x) * (c.x - circ.x) + (c.y - circ.y) * (c.y - circ.y))) < (c.radius + circ.radius)));
+
         if (collision.length > 1) {
+            let index1 = firstCircles.findIndex(i => i.id === c.id);
+            let ball1 = firstCircles[index1];
             for (let collide of collision) {
-                collision_set.add(collide.id);
+                //collision_set.add(collide.id);
+                if(collide.id !== c.id) {
+                    let index2 = firstCircles.findIndex(i => i.id === collide.id);
+
+                    let ball2 = firstCircles[index2];
+
+                    collision_calc(ball1, ball2, index1, index2);
+
+
+                }
             }
         }
 
         if (c.x >= pageWidth - radius / 2 || c.x <= radius / 2) {
             c.forcex *= -1;
-            c.color = getRndHexColor();
+            // c.color = getRndHexColor();
         }
 
         if (c.y >= pageHeight - radius / 2 || c.y <= radius / 2) {
             c.forcey *= -1;
-            c.color = getRndHexColor();
+            // c.color = getRndHexColor();
         }
 
         c.x = c.x < radius / 2 ? radius / 2 : c.x > pageWidth - radius / 2 ? pageWidth - radius / 2 : c.x
@@ -138,14 +188,18 @@ function update() {
         // c.radius = radius + getRndInteger(-radius / 10, radius / 10);
 
     }
-    for (let col_id of collision_set) {
+    // for (let col_id of collision_set) {
+    //
+    //     let index = firstCircles.findIndex(i => i.id === col_id);
+    //     firstCircles[index].forcex *= -1;
+    //     firstCircles[index].forcey *= -1;
+    //     // let stochasticity = 0.5 > Math.random() ? 1 : -1;
+    //     // firstCircles[index].x += radius * stochasticity;
+    //     // stochasticity = 0.5 > Math.random() ? 1 : -1;
+    //     // firstCircles[index].y += radius * stochasticity;
+    // }
 
-        let index = firstCircles.findIndex(i => i.id === col_id);
-        firstCircles[index].forcex *= -1;
-        firstCircles[index].forcey *= -1;
-    }
 
-    console.log(collision_set);
 
 
     window.requestAnimationFrame(update);
