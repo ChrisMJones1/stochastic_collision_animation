@@ -157,7 +157,8 @@ function update() {
 
 
         //check for collision
-
+    }
+    for (let c of firstCircles) {
         let collision = (firstCircles.filter(circ => (Math.sqrt((c.x - circ.x) * (c.x - circ.x) + (c.y - circ.y) * (c.y - circ.y))) < (c.radius + circ.radius)));
 
         if (collision.length > 1) {
